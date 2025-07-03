@@ -1,179 +1,30 @@
-"use client"
-
-import { useState, useMemo, useEffect } from "react"
+import {
+  Search,
+  Plus,
+  Filter,
+  SortAsc,
+  Heart,
+  Grid,
+  Users,
+  Zap,
+  Trophy,
+  Eye,
+  Brain,
+  Gauge,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Search, Plus, Filter, SortAsc, Heart, Grid, List } from "lucide-react"
-import type { Hero, HeroFilters } from "@/types/hero"
-import { heroesData } from "@/data/heroes"
-import { useFavorites } from "@/hooks/use-favorites"
-import { usePagination } from "@/hooks/use-pagination"
-import { HeroCard } from "@/components/hero-card"
-import { HeroDetailsModal } from "@/components/hero-details-modal"
-import { Pagination } from "@/components/pagination"
-import { StatsDashboard } from "@/components/stats-dashboard"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Image from "next/image"
 
 export default function SuperheroApp() {
-  const [heroes, setHeroes] = useState<Hero[]>(heroesData)
-  const [selectedHero, setSelectedHero] = useState<Hero | null>(null)
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
-  const [sortBy, setSortBy] = useState("name")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [showFilters, setShowFilters] = useState(false)
-
-  const { favorites, toggleFavorite, isFavorite } = useFavorites()
-
-  const [filters, setFilters] = useState<HeroFilters>({
-    search: "",
-    team: "",
-    category: "",
-    universe: "",
-    status: "",
-    minStrength: 0,
-  })
-
-  const [newHero, setNewHero] = useState<Omit<Hero, "id">>({
-    name: "",
-    alias: "",
-    powers: [],
-    description: "",
-    strength: 5,
-    intelligence: 5,
-    speed: 5,
-    durability: 5,
-    team: "",
-    image: "/placeholder.svg?height=300&width=300",
-    firstAppearance: new Date().getFullYear().toString(),
-    status: "Active",
-    category: "Hero",
-    universe: "Other",
-  })
-
-  // Filter and sort heroes
-  const filteredAndSortedHeroes = useMemo(() => {
-    let filtered = heroes
-
-    // Apply tab filter
-    if (activeTab === "favorites") {
-      filtered = filtered.filter((hero) => favorites.includes(hero.id))
-    } else if (activeTab === "heroes") {
-      filtered = filtered.filter((hero) => hero.category === "Hero")
-    } else if (activeTab === "villains") {
-      filtered = filtered.filter((hero) => hero.category === "Villain")
-    }
-
-    // Apply search and filters
-    filtered = filtered.filter((hero) => {
-      const matchesSearch =
-        !filters.search ||
-        hero.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        hero.alias.toLowerCase().includes(filters.search.toLowerCase()) ||
-        hero.powers.some((power) => power.toLowerCase().includes(filters.search.toLowerCase())) ||
-        hero.team.toLowerCase().includes(filters.search.toLowerCase())
-
-      const matchesTeam = !filters.team || hero.team === filters.team
-      const matchesCategory = !filters.category || hero.category === filters.category
-      const matchesUniverse = !filters.universe || hero.universe === filters.universe
-      const matchesStatus = !filters.status || hero.status === filters.status
-      const matchesStrength = hero.strength >= filters.minStrength
-
-      return matchesSearch && matchesTeam && matchesCategory && matchesUniverse && matchesStatus && matchesStrength
-    })
-
-    // Sort heroes
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return a.alias.localeCompare(b.alias)
-        case "strength":
-          return b.strength - a.strength
-        case "intelligence":
-          return b.intelligence - a.intelligence
-        case "firstAppearance":
-          return Number.parseInt(a.firstAppearance) - Number.parseInt(b.firstAppearance)
-        default:
-          return 0
-      }
-    })
-
-    return filtered
-  }, [heroes, activeTab, favorites, filters, sortBy])
-
-  const { paginatedItems, paginationInfo, goToPage, resetPagination } = usePagination(filteredAndSortedHeroes, 6)
-
-  // Reset pagination when filters change
-  useEffect(() => {
-    resetPagination()
-  }, [filteredAndSortedHeroes.length, resetPagination])
-
-  const handleAddHero = () => {
-    if (newHero.name && newHero.alias) {
-      const hero: Hero = {
-        ...newHero,
-        id: Date.now().toString(),
-        powers: newHero.powers.length > 0 ? newHero.powers : ["Unknown Power"],
-      }
-      setHeroes([...heroes, hero])
-      setNewHero({
-        name: "",
-        alias: "",
-        powers: [],
-        description: "",
-        strength: 5,
-        intelligence: 5,
-        speed: 5,
-        durability: 5,
-        team: "",
-        image: "/placeholder.svg?height=300&width=300",
-        firstAppearance: new Date().getFullYear().toString(),
-        status: "Active",
-        category: "Hero",
-        universe: "Other",
-      })
-      setIsAddModalOpen(false)
-    }
-  }
-
-  const handlePowerInput = (powerString: string) => {
-    const powers = powerString
-      .split(",")
-      .map((power) => power.trim())
-      .filter((power) => power.length > 0)
-    setNewHero({ ...newHero, powers })
-  }
-
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      team: "",
-      category: "",
-      universe: "",
-      status: "",
-      minStrength: 0,
-    })
-  }
-
-  const teams = [...new Set(heroes.map((hero) => hero.team))].sort()
-  const categories = [...new Set(heroes.map((hero) => hero.category))].sort()
-  const universes = [...new Set(heroes.map((hero) => hero.universe))].sort()
-  const statuses = [...new Set(heroes.map((hero) => hero.status))].sort()
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       <div className="max-w-7xl mx-auto p-6">
@@ -186,398 +37,791 @@ export default function SuperheroApp() {
         </div>
 
         {/* Stats Dashboard */}
-        <StatsDashboard heroes={heroes} favorites={favorites} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Characters</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">16</div>
+              <div className="flex gap-1 mt-2">
+                <Badge variant="secondary" className="text-xs">
+                  12 Heroes
+                </Badge>
+                <Badge variant="destructive" className="text-xs">
+                  2 Villains
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Favorites</CardTitle>
+              <Heart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">3</div>
+              <p className="text-xs text-muted-foreground">18.8% of total</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Strongest</CardTitle>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">Superman</div>
+              <p className="text-xs text-muted-foreground">Strength: 10/10</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Smartest</CardTitle>
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-lg font-bold">Batman</div>
+              <p className="text-xs text-muted-foreground">Intelligence: 10/10</p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Controls */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">
           {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              placeholder="Search heroes, villains, powers, teams..."
-              value={filters.search}
-              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="pl-12 h-12 text-lg"
-            />
+            <Input placeholder="Search heroes, villains, powers, teams..." className="pl-12 h-12 text-lg" />
           </div>
 
           {/* Action buttons */}
           <div className="flex gap-2">
-            <Button
-              variant={showFilters ? "default" : "outline"}
-              onClick={() => setShowFilters(!showFilters)}
-              className="h-12"
-            >
+            <Button variant="outline" className="h-12 bg-transparent">
               <Filter className="h-4 w-4 mr-2" />
               Filters
             </Button>
 
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40 h-12">
-                <SortAsc className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="strength">Strength</SelectItem>
-                <SelectItem value="intelligence">Intelligence</SelectItem>
-                <SelectItem value="firstAppearance">First Appearance</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="h-12"
-            >
-              {viewMode === "grid" ? <List className="h-4 w-4" /> : <Grid className="h-4 w-4" />}
+            <Button variant="outline" className="h-12 bg-transparent">
+              <SortAsc className="h-4 w-4 mr-2" />
+              Sort by Name
             </Button>
 
-            <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="h-12">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Character
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Add New Character</DialogTitle>
-                  <DialogDescription>Create a new superhero or villain profile</DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-6 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Real Name</Label>
-                      <Input
-                        id="name"
-                        value={newHero.name}
-                        onChange={(e) => setNewHero({ ...newHero, name: e.target.value })}
-                        placeholder="e.g., Peter Parker"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="alias">Hero/Villain Alias</Label>
-                      <Input
-                        id="alias"
-                        value={newHero.alias}
-                        onChange={(e) => setNewHero({ ...newHero, alias: e.target.value })}
-                        placeholder="e.g., Spider-Man"
-                      />
-                    </div>
-                  </div>
+            <Button variant="outline" className="h-12 bg-transparent">
+              <Grid className="h-4 w-4" />
+            </Button>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="powers">Powers (comma-separated)</Label>
-                    <Input
-                      id="powers"
-                      value={newHero.powers.join(", ")}
-                      onChange={(e) => handlePowerInput(e.target.value)}
-                      placeholder="e.g., Super Strength, Flight, Heat Vision"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select
-                        value={newHero.category}
-                        onValueChange={(value: any) => setNewHero({ ...newHero, category: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Hero">Hero</SelectItem>
-                          <SelectItem value="Villain">Villain</SelectItem>
-                          <SelectItem value="Anti-Hero">Anti-Hero</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="universe">Universe</Label>
-                      <Select
-                        value={newHero.universe}
-                        onValueChange={(value: any) => setNewHero({ ...newHero, universe: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Marvel">Marvel</SelectItem>
-                          <SelectItem value="DC">DC</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select
-                        value={newHero.status}
-                        onValueChange={(value: any) => setNewHero({ ...newHero, status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Retired">Retired</SelectItem>
-                          <SelectItem value="Deceased">Deceased</SelectItem>
-                          <SelectItem value="Unknown">Unknown</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="team">Team</Label>
-                      <Input
-                        id="team"
-                        value={newHero.team}
-                        onChange={(e) => setNewHero({ ...newHero, team: e.target.value })}
-                        placeholder="e.g., Avengers"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="firstAppearance">First Appearance</Label>
-                      <Input
-                        id="firstAppearance"
-                        value={newHero.firstAppearance}
-                        onChange={(e) => setNewHero({ ...newHero, firstAppearance: e.target.value })}
-                        placeholder="e.g., 1962"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Strength: {newHero.strength}/10</Label>
-                        <Slider
-                          value={[newHero.strength]}
-                          onValueChange={([value]) => setNewHero({ ...newHero, strength: value })}
-                          max={10}
-                          min={1}
-                          step={1}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Intelligence: {newHero.intelligence}/10</Label>
-                        <Slider
-                          value={[newHero.intelligence]}
-                          onValueChange={([value]) => setNewHero({ ...newHero, intelligence: value })}
-                          max={10}
-                          min={1}
-                          step={1}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Speed: {newHero.speed}/10</Label>
-                        <Slider
-                          value={[newHero.speed]}
-                          onValueChange={([value]) => setNewHero({ ...newHero, speed: value })}
-                          max={10}
-                          min={1}
-                          step={1}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Durability: {newHero.durability}/10</Label>
-                        <Slider
-                          value={[newHero.durability]}
-                          onValueChange={([value]) => setNewHero({ ...newHero, durability: value })}
-                          max={10}
-                          min={1}
-                          step={1}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={newHero.description}
-                      onChange={(e) => setNewHero({ ...newHero, description: e.target.value })}
-                      placeholder="Brief description of the character..."
-                      rows={4}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleAddHero}>Add Character</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button className="h-12">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Character
+            </Button>
           </div>
         </div>
 
         {/* Advanced Filters */}
-        {showFilters && (
-          <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Advanced Filters</h3>
-              <Button variant="ghost" onClick={clearFilters}>
-                Clear All
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Team</Label>
-                <Select value={filters.team} onValueChange={(value) => setFilters({ ...filters, team: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All teams" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All teams">All teams</SelectItem>
-                    {teams.map((team) => (
-                      <SelectItem key={team} value={team}>
-                        {team}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={filters.category} onValueChange={(value) => setFilters({ ...filters, category: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All categories">All categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Universe</Label>
-                <Select value={filters.universe} onValueChange={(value) => setFilters({ ...filters, universe: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All universes" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All universes">All universes</SelectItem>
-                    {universes.map((universe) => (
-                      <SelectItem key={universe} value={universe}>
-                        {universe}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={filters.status} onValueChange={(value) => setFilters({ ...filters, status: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All statuses">All statuses</SelectItem>
-                    {statuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <div className="bg-white rounded-lg p-6 mb-8 shadow-sm border">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Advanced Filters</h3>
+            <Button variant="ghost">Clear All</Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Team</label>
+              <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                All teams
               </div>
             </div>
-            <div className="mt-4">
-              <Label>Minimum Strength: {filters.minStrength}/10</Label>
-              <Slider
-                value={[filters.minStrength]}
-                onValueChange={([value]) => setFilters({ ...filters, minStrength: value })}
-                max={10}
-                min={0}
-                step={1}
-                className="mt-2"
-              />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Category</label>
+              <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                All categories
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Universe</label>
+              <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                All universes
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                All statuses
+              </div>
             </div>
           </div>
-        )}
+          <div className="mt-4">
+            <label className="text-sm font-medium">Minimum Strength: 0/10</label>
+            <div className="relative flex w-full touch-none select-none items-center mt-2">
+              <div className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
+                <div className="absolute h-full bg-primary" style={{ width: "0%" }} />
+              </div>
+              <div className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors" />
+            </div>
+          </div>
+        </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+        <Tabs value="all" className="mb-8">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All Characters ({heroes.length})</TabsTrigger>
+            <TabsTrigger value="all">All Characters (16)</TabsTrigger>
             <TabsTrigger value="favorites" className="flex items-center gap-2">
               <Heart className="h-4 w-4" />
-              Favorites ({favorites.length})
+              Favorites (3)
             </TabsTrigger>
-            <TabsTrigger value="heroes">Heroes ({heroes.filter((h) => h.category === "Hero").length})</TabsTrigger>
-            <TabsTrigger value="villains">
-              Villains ({heroes.filter((h) => h.category === "Villain").length})
-            </TabsTrigger>
+            <TabsTrigger value="heroes">Heroes (12)</TabsTrigger>
+            <TabsTrigger value="villains">Villains (2)</TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Results info */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
-            <p className="text-gray-600">
-              Showing {paginatedItems.length} of {filteredAndSortedHeroes.length} characters
-            </p>
-            {Object.values(filters).some((filter) => filter !== "" && filter !== 0) && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Filter className="h-3 w-3" />
-                Filtered
-              </Badge>
-            )}
+            <p className="text-gray-600">Showing 6 of 16 characters</p>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Filter className="h-3 w-3" />
+              Filtered
+            </Badge>
           </div>
         </div>
 
         {/* Character Grid */}
-        {paginatedItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-            {paginatedItems.map((hero) => (
-              <HeroCard
-                key={hero.id}
-                hero={hero}
-                isFavorite={isFavorite(hero.id)}
-                onToggleFavorite={toggleFavorite}
-                onViewDetails={(hero) => {
-                  setSelectedHero(hero)
-                  setIsDetailsModalOpen(true)
-                }}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
+          {/* Hero Card 1 - Superman */}
+          <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
+            <div className="relative h-64 overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=300&width=300"
+                alt="Superman"
+                fill
+                className="object-cover transition-all duration-500 group-hover:scale-110"
               />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <div className="text-gray-400 mb-4">
-              <Search className="h-16 w-16 mx-auto" />
+
+              {/* Status indicator */}
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <Badge variant="secondary" className="text-xs bg-white/90 text-gray-700">
+                  Active
+                </Badge>
+              </div>
+
+              {/* Universe badge */}
+              <Badge className="absolute top-3 right-3 text-xs bg-blue-600 text-white">DC</Badge>
+
+              {/* Favorite button */}
+              <Button size="sm" variant="ghost" className="absolute bottom-3 right-3 bg-white/90 hover:bg-white">
+                <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+              </Button>
+
+              {/* View details button */}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute bottom-3 left-3 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Eye className="h-4 w-4 text-gray-600" />
+              </Button>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No characters found</h3>
-            <p className="text-gray-600 mb-4">Try adjusting your search terms or filters</p>
-            <Button onClick={clearFilters} variant="outline">
-              Clear Filters
-            </Button>
-          </div>
-        )}
+
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg leading-tight">Superman</h3>
+                  <p className="text-sm text-gray-600">Clark Kent</p>
+                </div>
+                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">Hero</Badge>
+              </div>
+              <Badge variant="outline" className="w-fit text-xs">
+                Justice League
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 line-clamp-2">
+                The Last Son of Krypton, protector of Earth and symbol of hope for all humanity.
+              </p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs font-medium">Strength</span>
+                  </div>
+                  <Progress value={100} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Brain className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">Intelligence</span>
+                  </div>
+                  <Progress value={80} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3 text-green-500" />
+                    <span className="text-xs font-medium">Speed</span>
+                  </div>
+                  <Progress value={90} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">Durability</span>
+                  </div>
+                  <Progress value={100} className="h-2" />
+                </div>
+              </div>
+
+              {/* Powers */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Powers:</h4>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    Super Strength
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Flight
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100">
+                    +4 more
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2 border-t">First appeared: 1938</div>
+            </CardContent>
+          </Card>
+
+          {/* Hero Card 2 - Batman */}
+          <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
+            <div className="relative h-64 overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=300&width=300"
+                alt="Batman"
+                fill
+                className="object-cover transition-all duration-500 group-hover:scale-110"
+              />
+
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <Badge variant="secondary" className="text-xs bg-white/90 text-gray-700">
+                  Active
+                </Badge>
+              </div>
+
+              <Badge className="absolute top-3 right-3 text-xs bg-blue-600 text-white">DC</Badge>
+
+              <Button size="sm" variant="ghost" className="absolute bottom-3 right-3 bg-white/90 hover:bg-white">
+                <Heart className="h-4 w-4 text-gray-600" />
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute bottom-3 left-3 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Eye className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
+
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg leading-tight">Batman</h3>
+                  <p className="text-sm text-gray-600">Bruce Wayne</p>
+                </div>
+                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">Hero</Badge>
+              </div>
+              <Badge variant="outline" className="w-fit text-xs">
+                Justice League
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 line-clamp-2">
+                The Dark Knight of Gotham City, using fear as a weapon against crime and corruption.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs font-medium">Strength</span>
+                  </div>
+                  <Progress value={60} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Brain className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">Intelligence</span>
+                  </div>
+                  <Progress value={100} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3 text-green-500" />
+                    <span className="text-xs font-medium">Speed</span>
+                  </div>
+                  <Progress value={60} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">Durability</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Powers:</h4>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    Martial Arts
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Detective Skills
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100">
+                    +3 more
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2 border-t">First appeared: 1939</div>
+            </CardContent>
+          </Card>
+
+          {/* Hero Card 3 - Wonder Woman */}
+          <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
+            <div className="relative h-64 overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=300&width=300"
+                alt="Wonder Woman"
+                fill
+                className="object-cover transition-all duration-500 group-hover:scale-110"
+              />
+
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <Badge variant="secondary" className="text-xs bg-white/90 text-gray-700">
+                  Active
+                </Badge>
+              </div>
+
+              <Badge className="absolute top-3 right-3 text-xs bg-blue-600 text-white">DC</Badge>
+
+              <Button size="sm" variant="ghost" className="absolute bottom-3 right-3 bg-white/90 hover:bg-white">
+                <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute bottom-3 left-3 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Eye className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
+
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg leading-tight">Wonder Woman</h3>
+                  <p className="text-sm text-gray-600">Diana Prince</p>
+                </div>
+                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">Hero</Badge>
+              </div>
+              <Badge variant="outline" className="w-fit text-xs">
+                Justice League
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 line-clamp-2">
+                Amazonian princess and warrior, champion of truth, justice, and equality.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs font-medium">Strength</span>
+                  </div>
+                  <Progress value={90} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Brain className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">Intelligence</span>
+                  </div>
+                  <Progress value={80} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3 text-green-500" />
+                    <span className="text-xs font-medium">Speed</span>
+                  </div>
+                  <Progress value={80} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">Durability</span>
+                  </div>
+                  <Progress value={90} className="h-2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Powers:</h4>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    Super Strength
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Flight
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100">
+                    +4 more
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2 border-t">First appeared: 1941</div>
+            </CardContent>
+          </Card>
+
+          {/* Hero Card 4 - Spider-Man */}
+          <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
+            <div className="relative h-64 overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=300&width=300"
+                alt="Spider-Man"
+                fill
+                className="object-cover transition-all duration-500 group-hover:scale-110"
+              />
+
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <Badge variant="secondary" className="text-xs bg-white/90 text-gray-700">
+                  Active
+                </Badge>
+              </div>
+
+              <Badge className="absolute top-3 right-3 text-xs bg-red-600 text-white">Marvel</Badge>
+
+              <Button size="sm" variant="ghost" className="absolute bottom-3 right-3 bg-white/90 hover:bg-white">
+                <Heart className="h-4 w-4 text-gray-600" />
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute bottom-3 left-3 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Eye className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
+
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg leading-tight">Spider-Man</h3>
+                  <p className="text-sm text-gray-600">Peter Parker</p>
+                </div>
+                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">Hero</Badge>
+              </div>
+              <Badge variant="outline" className="w-fit text-xs">
+                Avengers
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 line-clamp-2">
+                Your friendly neighborhood Spider-Man, with great power comes great responsibility.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs font-medium">Strength</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Brain className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">Intelligence</span>
+                  </div>
+                  <Progress value={90} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3 text-green-500" />
+                    <span className="text-xs font-medium">Speed</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">Durability</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Powers:</h4>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    Wall Crawling
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Spider Sense
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100">
+                    +3 more
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2 border-t">First appeared: 1962</div>
+            </CardContent>
+          </Card>
+
+          {/* Hero Card 5 - Iron Man */}
+          <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
+            <div className="relative h-64 overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=300&width=300"
+                alt="Iron Man"
+                fill
+                className="object-cover transition-all duration-500 group-hover:scale-110"
+              />
+
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <Badge variant="secondary" className="text-xs bg-white/90 text-gray-700">
+                  Active
+                </Badge>
+              </div>
+
+              <Badge className="absolute top-3 right-3 text-xs bg-red-600 text-white">Marvel</Badge>
+
+              <Button size="sm" variant="ghost" className="absolute bottom-3 right-3 bg-white/90 hover:bg-white">
+                <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute bottom-3 left-3 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Eye className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
+
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg leading-tight">Iron Man</h3>
+                  <p className="text-sm text-gray-600">Tony Stark</p>
+                </div>
+                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">Hero</Badge>
+              </div>
+              <Badge variant="outline" className="w-fit text-xs">
+                Avengers
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 line-clamp-2">
+                Billionaire genius inventor who uses his technology to protect the world.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs font-medium">Strength</span>
+                  </div>
+                  <Progress value={80} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Brain className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">Intelligence</span>
+                  </div>
+                  <Progress value={100} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3 text-green-500" />
+                    <span className="text-xs font-medium">Speed</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">Durability</span>
+                  </div>
+                  <Progress value={80} className="h-2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Powers:</h4>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    Powered Armor
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Genius Intellect
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100">
+                    +3 more
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2 border-t">First appeared: 1963</div>
+            </CardContent>
+          </Card>
+
+          {/* Hero Card 6 - Deadpool */}
+          <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50">
+            <div className="relative h-64 overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=300&width=300"
+                alt="Deadpool"
+                fill
+                className="object-cover transition-all duration-500 group-hover:scale-110"
+              />
+
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <Badge variant="secondary" className="text-xs bg-white/90 text-gray-700">
+                  Active
+                </Badge>
+              </div>
+
+              <Badge className="absolute top-3 right-3 text-xs bg-red-600 text-white">Marvel</Badge>
+
+              <Button size="sm" variant="ghost" className="absolute bottom-3 right-3 bg-white/90 hover:bg-white">
+                <Heart className="h-4 w-4 text-gray-600" />
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                className="absolute bottom-3 left-3 bg-white/90 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Eye className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
+
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="font-bold text-lg leading-tight">Deadpool</h3>
+                  <p className="text-sm text-gray-600">Wade Wilson</p>
+                </div>
+                <Badge className="text-xs bg-yellow-100 text-yellow-800 border-yellow-200">Anti-Hero</Badge>
+              </div>
+              <Badge variant="outline" className="w-fit text-xs">
+                X-Force
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600 line-clamp-2">
+                The Merc with a Mouth, an unpredictable anti-hero with accelerated healing powers.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-orange-500" />
+                    <span className="text-xs font-medium">Strength</span>
+                  </div>
+                  <Progress value={60} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Brain className="h-3 w-3 text-blue-500" />
+                    <span className="text-xs font-medium">Intelligence</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Gauge className="h-3 w-3 text-green-500" />
+                    <span className="text-xs font-medium">Speed</span>
+                  </div>
+                  <Progress value={70} className="h-2" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-purple-500" />
+                    <span className="text-xs font-medium">Durability</span>
+                  </div>
+                  <Progress value={90} className="h-2" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Powers:</h4>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="outline" className="text-xs">
+                    Healing Factor
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Martial Arts
+                  </Badge>
+                  <Badge variant="outline" className="text-xs bg-gray-100">
+                    +3 more
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 pt-2 border-t">First appeared: 1991</div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Pagination */}
-        <Pagination paginationInfo={paginationInfo} onPageChange={goToPage} />
+        <div className="flex items-center justify-center space-x-2">
+          <Button variant="outline" size="sm" disabled>
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
 
-        {/* Hero Details Modal */}
-        <HeroDetailsModal
-          hero={selectedHero}
-          isOpen={isDetailsModalOpen}
-          onClose={() => setIsDetailsModalOpen(false)}
-          isFavorite={selectedHero ? isFavorite(selectedHero.id) : false}
-          onToggleFavorite={toggleFavorite}
-        />
+          <Button variant="default" size="sm">
+            1
+          </Button>
+          <Button variant="outline" size="sm">
+            2
+          </Button>
+          <Button variant="outline" size="sm">
+            3
+          </Button>
+          <Button variant="ghost" size="sm" disabled>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+
+          <Button variant="outline" size="sm">
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   )
